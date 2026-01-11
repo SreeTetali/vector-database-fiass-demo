@@ -97,14 +97,17 @@ vector-database-faiss-demo/
 │   └── test_vector_store.py           # Unit tests for vector store
 └── test_setup.py                      # Sanity check script for full stack
 
-🚀 Quick Start
-1. Clone Repository
-git clone https://github.com/YOUR_USERNAME/vector-database-faiss-demo.git
+## 🚀 Quick Start
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/SreeTetali/vector-database-faiss-demo.git
 cd vector-database-faiss-demo
 
 2. Create and Activate Virtual Environment
 
-bash
+```bash
 # Create venv
 python -m venv venv
 
@@ -166,7 +169,9 @@ embedder = EmbeddingEngine()
 embeddings = embedder.embed_documents(docs)
 
 # Create and populate an IVFFlat index
-store = FAISSVectorStore(embedding_dim=embeddings.shape, index_type="IVFFlat")[1]
+```python
+# Create and populate an IVFFlat index
+store = FAISSVectorStore(embedding_dim=embeddings.shape[1], index_type="IVFFlat")
 store.create_index(n_vectors=len(docs), nlist=10)  # Example parameters
 store.train(embeddings)
 store.add_documents(embeddings, docs)
@@ -189,8 +194,6 @@ new_store = FAISSVectorStore(embedding_dim=384, index_type="IVFFlat")
 new_store.load("python_azure_docs")
 
 # Now new_store is ready for search
-
-🔍 Index Types Explained
 
 🔍 Index Types Explained
 1. IndexFlatIP – Exact Inner Product (Cosine)
@@ -348,15 +351,15 @@ Although this is primarily a portfolio project, improvements are welcome:
 📝 License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
-👤 Author
+## 👤 Author
 
-Your Name
+**Sree Tetali**
 
-    GitHub: @SreeTetali
+- GitHub: [@SreeTetali](https://github.com/SreeTetali)
+- LinkedIn: [linkedin.com/in/sree-tetali](https://www.linkedin.com/in/sree-tetali)
+- Email: sree.tetali@gmail.com
 
-    LinkedIn: https://www.linkedin.com/in/YOUR_PROFILE
+---
 
-    Email: sree.tetali@gmail.com
-
-Built to demonstrate practical vector database and FAISS expertise for managing AI/LLM-powered systems.
+**Built to demonstrate practical vector database and FAISS expertise for managing AI/LLM-powered systems.**
 

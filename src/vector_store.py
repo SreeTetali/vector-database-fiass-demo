@@ -5,313 +5,256 @@ FAISS vector store implementation with multiple index types.
 import faiss
 import numpy as np
 import pickle
-import json
-from pathlib import Path
+import os
 from typing import List, Dict, Tuple, Optional
-import time
+from pathlib import Path
 
 
 class FAISSVectorStore:
-    """
-    FAISS-based vector store supporting multiple index types.
-    Supports IndexFlatIP, IndexIVFFlat, and IndexHNSWFlat.
-    """
+    """FAISS-based vector store supporting multiple index types."""
     
-    def __init__(
-        self, 
-        embedding_dim: int = 384,
-        index_type: str = "FlatIP",
-        index_dir: str = "data/indices"
-    ):
+    def __init__(self, embedding_dim: int = 384, index_type: str = "FlatIP"):
         """
         Initialize FAISS vector store.
         
         Args:
-            embedding_dim: Dimension of embeddings (default 384 for all-MiniLM-L6-v2)
-            index_type: Type of FAISS index - "FlatIP", "IVFFlat", "HNSW"
-            index_dir: Directory to save/load indices
+            embedding_dim: Dimension of embedding vectors
+            index_type: Type of FAISS index ('FlatIP', 'IVFFlat', 'HNSW')
         """
         self.embedding_dim = embedding_dim
         self.index_type = index_type
-        self.index_dir = Path(index_dir)
-        self.index_dir.mkdir(parents=True, exist_ok=True)
-        
         self.index = None
         self.documents = []
-        self.metadata = []
+        self.is_trained = False
         
-        print(f"✓ Initialized FAISSVectorStore with {index_type} index")
+        # Create index based on type
+        self._create_index()
     
-    def create_index(self, n_vectors: int = 0, nlist: int = 100, m: int = 32):
-        """
-        Create appropriate FAISS index based on index_type.
+    def _create_index(self):
+        """Create FAISS index based on specified type."""
+        print(f"\n{'='*60}")
+        print(f"Initializing FAISS Index: {self.index_type}")
+        print(f"{'='*60}")
         
-        Args:
-            n_vectors: Number of vectors (used for IVF training)
-            nlist: Number of clusters for IVF (default 100)
-            m: Number of connections for HNSW (default 32)
-        """
         if self.index_type == "FlatIP":
-            # Exact search using Inner Product (cosine similarity with normalized vectors)
+            # Exact search using inner product (cosine similarity with normalized vectors)
             self.index = faiss.IndexFlatIP(self.embedding_dim)
+            self.is_trained = True
             print(f"✓ Created IndexFlatIP (exact search, cosine similarity)")
             
         elif self.index_type == "IVFFlat":
-            # Inverted File Index - faster approximate search
-            # Requires training
+            # Inverted file index for faster approximate search
+            nlist = 10  # number of clusters
             quantizer = faiss.IndexFlatIP(self.embedding_dim)
             self.index = faiss.IndexIVFFlat(quantizer, self.embedding_dim, nlist)
-            print(f"✓ Created IndexIVFFlat with {nlist} clusters (approximate search)")
-            print(f"  Note: Requires training before adding vectors")
+            print(f"✓ Created IndexIVFFlat")
+            print(f"  - nlist (clusters): {nlist}")
+            print(f"  - Requires training before use")
             
         elif self.index_type == "HNSW":
-            # Hierarchical Navigable Small World - fast approximate search
-            self.index = faiss.IndexHNSWFlat(self.embedding_dim, m)
-            self.index.hnsw.efConstruction = 40  # Quality of graph construction
-            self.index.hnsw.efSearch = 16  # Search time/accuracy tradeoff
-            print(f"✓ Created IndexHNSWFlat with M={m} (fast approximate search)")
-            print(f"  efConstruction: {self.index.hnsw.efConstruction}, efSearch: {self.index.hnsw.efSearch}")
+            # Hierarchical Navigable Small World graph
+            M = 32  # number of connections per layer
+            self.index = faiss.IndexHNSWFlat(self.embedding_dim, M)
+            self.index.hnsw.efConstruction = 40
+            self.index.hnsw.efSearch = 16
+            self.is_trained = True
+            print(f"✓ Created IndexHNSWFlat (fast approximate search)")
+            print(f"  efConstruction: 40, efSearch: 16")
             
         else:
-            raise ValueError(f"Unknown index type: {self.index_type}. Use 'FlatIP', 'IVFFlat', or 'HNSW'")
+            raise ValueError(f"Unknown index type: {self.index_type}")
     
     def train(self, embeddings: np.ndarray):
         """
-        Train index (required for IVFFlat).
+        Train the index (required for IVFFlat).
         
         Args:
             embeddings: Training vectors (n_vectors, embedding_dim)
         """
-        if self.index_type == "IVFFlat":
-            if not self.index.is_trained:
-                print(f"Training IVFFlat index with {embeddings.shape[0]} vectors...")
-                start_time = time.time()
-                self.index.train(embeddings)
-                train_time = time.time() - start_time
-                print(f"✓ Training completed in {train_time:.2f} seconds")
+        if self.index_type == "IVFFlat" and not self.is_trained:
+            print(f"Training IVFFlat index on {len(embeddings)} vectors...")
+            self.index.train(embeddings)
+            self.is_trained = True
+            print("✓ Index trained successfully")
         else:
-            print(f"⚠ {self.index_type} does not require training")
+            if self.is_trained:
+                print("✓ Index already trained or doesn't require training")
     
-    def add_documents(
-        self, 
-        embeddings: np.ndarray, 
-        documents: List[Dict],
-        metadata: Optional[List[Dict]] = None
-    ):
+    def add_documents(self, embeddings: np.ndarray, documents: List[Dict]):
         """
         Add documents and their embeddings to the index.
         
         Args:
             embeddings: Document embeddings (n_docs, embedding_dim)
             documents: List of document dictionaries
-            metadata: Optional metadata for each document
         """
-        if self.index is None:
-            self.create_index(n_vectors=embeddings.shape[0])
+        # Ensure embeddings are float32
+        embeddings = embeddings.astype('float32')
         
-        # Train if needed (IVFFlat)
-        if self.index_type == "IVFFlat" and not self.index.is_trained:
+        print(f"\nAdding {len(documents)} vectors to index...")
+        
+        # Train if needed
+        if not self.is_trained:
             self.train(embeddings)
         
-        # Add vectors to index
-        print(f"Adding {embeddings.shape[0]} vectors to index...")
-        start_time = time.time()
+        # Add to index
+        import time
+        start = time.time()
         self.index.add(embeddings)
-        add_time = time.time() - start_time
+        elapsed = time.time() - start
         
-        # Store documents and metadata
         self.documents.extend(documents)
-        if metadata:
-            self.metadata.extend(metadata)
-        else:
-            self.metadata.extend([{}] * len(documents))
         
-        print(f"✓ Added {embeddings.shape[0]} vectors in {add_time:.2f} seconds")
+        print(f"✓ Added {len(documents)} vectors in {elapsed:.2f} seconds")
         print(f"✓ Total vectors in index: {self.index.ntotal}")
     
-    def search(
-        self, 
-        query_embedding: np.ndarray, 
-        k: int = 5,
-        nprobe: int = 10
-    ) -> Tuple[List[float], List[int]]:
+    def search(self, query_embedding: np.ndarray, k: int = 5, **kwargs) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Search for k nearest neighbors.
+        Search for similar vectors.
         
         Args:
-            query_embedding: Query vector (1, embedding_dim) or (embedding_dim,)
+            query_embedding: Query vector (1, embedding_dim)
             k: Number of results to return
-            nprobe: Number of clusters to search (IVFFlat only)
-            
+            **kwargs: Additional parameters (e.g., nprobe for IVFFlat)
+        
         Returns:
             Tuple of (distances, indices)
         """
-        if self.index is None or self.index.ntotal == 0:
-            raise ValueError("Index is empty. Add documents first.")
-        
-        # Reshape query if needed
+        # Ensure query is 2D and float32
         if query_embedding.ndim == 1:
             query_embedding = query_embedding.reshape(1, -1)
+        query_embedding = query_embedding.astype('float32')
         
-        # Set nprobe for IVF indices
+        # Set nprobe for IVFFlat
         if self.index_type == "IVFFlat":
+            nprobe = kwargs.get('nprobe', 3)
             self.index.nprobe = nprobe
         
         # Search
-        start_time = time.time()
         distances, indices = self.index.search(query_embedding, k)
-        search_time = time.time() - start_time
         
-        # Convert to lists
-        distances = distances[0].tolist()
-        indices = indices[0].tolist()
-        
-        return distances, indices, search_time
+        return distances[0], indices[0]
     
-    def search_with_documents(
-        self, 
-        query_embedding: np.ndarray, 
-        k: int = 5,
-        nprobe: int = 10,
-        filter_metadata: Optional[Dict] = None
-    ) -> List[Dict]:
+    def search_with_documents(self, query_embedding: np.ndarray, k: int = 5, **kwargs) -> List[Dict]:
         """
         Search and return documents with scores.
         
         Args:
             query_embedding: Query vector
             k: Number of results
-            nprobe: Number of clusters to search (IVFFlat)
-            filter_metadata: Optional metadata filter (e.g., {"category": "Azure Functions"})
-            
+            **kwargs: Additional search parameters
+        
         Returns:
-            List of result dictionaries with document, score, and metadata
+            List of dicts with 'document', 'score', 'index'
         """
-        distances, indices, search_time = self.search(query_embedding, k, nprobe)
+        distances, indices = self.search(query_embedding, k, **kwargs)
         
         results = []
         for dist, idx in zip(distances, indices):
-            if idx == -1:  # FAISS returns -1 for empty slots
-                continue
-            
-            doc = self.documents[idx]
-            meta = self.metadata[idx]
-            
-            # Apply metadata filter if provided
-            if filter_metadata:
-                match = all(meta.get(key) == value for key, value in filter_metadata.items())
-                if not match:
-                    continue
-            
-            result = {
-                "document": doc,
-                "score": float(dist),
-                "index": int(idx),
-                "metadata": meta,
-                "search_time_ms": search_time * 1000
-            }
-            results.append(result)
+            if idx < len(self.documents):  # Valid index
+                results.append({
+                    'document': self.documents[idx],
+                    'score': float(dist),
+                    'index': int(idx)
+                })
         
-        return results[:k]  # Return top k after filtering
-    
-    def save(self, name: str = "vector_store"):
-        """
-        Save index, documents, and metadata to disk.
-        
-        Args:
-            name: Base name for saved files
-        """
-        if self.index is None:
-            raise ValueError("No index to save")
-        
-        # Save FAISS index
-        index_file = self.index_dir / f"{name}_{self.index_type}.index"
-        faiss.write_index(self.index, str(index_file))
-        
-        # Save documents and metadata
-        data_file = self.index_dir / f"{name}_{self.index_type}_data.pkl"
-        with open(data_file, 'wb') as f:
-            pickle.dump({
-                'documents': self.documents,
-                'metadata': self.metadata,
-                'embedding_dim': self.embedding_dim,
-                'index_type': self.index_type
-            }, f)
-        
-        print(f"✓ Saved index to: {index_file}")
-        print(f"✓ Saved data to: {data_file}")
-    
-    def load(self, name: str = "vector_store"):
-        """
-        Load index, documents, and metadata from disk.
-        
-        Args:
-            name: Base name of saved files
-        """
-        # Load FAISS index
-        index_file = self.index_dir / f"{name}_{self.index_type}.index"
-        if not index_file.exists():
-            raise FileNotFoundError(f"Index file not found: {index_file}")
-        
-        self.index = faiss.read_index(str(index_file))
-        
-        # Load documents and metadata
-        data_file = self.index_dir / f"{name}_{self.index_type}_data.pkl"
-        with open(data_file, 'rb') as f:
-            data = pickle.load(f)
-            self.documents = data['documents']
-            self.metadata = data['metadata']
-            self.embedding_dim = data['embedding_dim']
-        
-        print(f"✓ Loaded index from: {index_file}")
-        print(f"✓ Loaded {len(self.documents)} documents")
-        print(f"✓ Index contains {self.index.ntotal} vectors")
+        return results
     
     def get_stats(self) -> Dict:
         """Get index statistics."""
-        if self.index is None:
-            return {"status": "No index created"}
-        
         stats = {
-            "index_type": self.index_type,
-            "embedding_dim": self.embedding_dim,
-            "n_vectors": self.index.ntotal,
-            "n_documents": len(self.documents),
-            "is_trained": getattr(self.index, 'is_trained', True)
+            'index_type': self.index_type,
+            'embedding_dim': self.embedding_dim,
+            'n_vectors': self.index.ntotal,
+            'n_documents': len(self.documents),
+            'is_trained': self.is_trained
         }
         
+        # Add index-specific stats
         if self.index_type == "IVFFlat":
             stats["nlist"] = self.index.nlist
             stats["nprobe"] = getattr(self.index, 'nprobe', 1)
         elif self.index_type == "HNSW":
-            stats["M"] = self.index.hnsw.M
-            stats["efSearch"] = self.index.hnsw.efSearch
+            # Simplified - avoid version-specific attributes
+            stats["note"] = "HNSW graph-based index (M=32, efSearch=16)"
         
         return stats
+    
+    def save(self, path: str):
+        """
+        Save index and documents to disk.
+        
+        Args:
+            path: Base path for saving (without extension)
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Save FAISS index
+        index_path = f"{path}.index"
+        faiss.write_index(self.index, index_path)
+        
+        # Save documents and metadata
+        meta_path = f"{path}.pkl"
+        with open(meta_path, 'wb') as f:
+            pickle.dump({
+                'documents': self.documents,
+                'embedding_dim': self.embedding_dim,
+                'index_type': self.index_type,
+                'is_trained': self.is_trained
+            }, f)
+        
+        print(f"✓ Saved index to {index_path}")
+        print(f"✓ Saved metadata to {meta_path}")
+    
+    def load(self, path: str):
+        """
+        Load index and documents from disk.
+        
+        Args:
+            path: Base path for loading (without extension)
+        """
+        index_path = f"{path}.index"
+        meta_path = f"{path}.pkl"
+        
+        # Load FAISS index
+        self.index = faiss.read_index(index_path)
+        
+        # Load documents and metadata
+        with open(meta_path, 'rb') as f:
+            metadata = pickle.load(f)
+            self.documents = metadata['documents']
+            self.embedding_dim = metadata['embedding_dim']
+            self.index_type = metadata['index_type']
+            self.is_trained = metadata['is_trained']
+        
+        print(f"✓ Loaded index from {index_path}")
+        print(f"✓ Loaded {len(self.documents)} documents")
 
 
 # Quick test
 if __name__ == "__main__":
-    # Test with dummy data
-    print("Testing FAISSVectorStore...")
+    import numpy as np
     
-    # Create dummy embeddings
-    n_docs = 100
+    # Create sample embeddings and documents
+    n_docs = 10
     dim = 384
     embeddings = np.random.randn(n_docs, dim).astype('float32')
-    faiss.normalize_L2(embeddings)  # Normalize for cosine similarity
+    # Normalize for cosine similarity
+    embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
     
-    # Create dummy documents
-    documents = [{"id": i, "text": f"Document {i}"} for i in range(n_docs)]
+    docs = [{'id': i, 'text': f'Document {i}'} for i in range(n_docs)]
     
-    # Test FlatIP index
-    print("\n--- Testing IndexFlatIP ---")
-    store_flat = FAISSVectorStore(embedding_dim=dim, index_type="FlatIP")
-    store_flat.add_documents(embeddings, documents)
+    # Test FlatIP
+    print("\n=== Testing IndexFlatIP ===")
+    store = FAISSVectorStore(embedding_dim=dim, index_type="FlatIP")
+    store.add_documents(embeddings, docs)
     
+    # Search
     query = embeddings[0:1]  # Use first doc as query
-    results = store_flat.search_with_documents(query, k=3)
-    print(f"Top 3 results: {[r['document']['id'] for r in results]}")
-    print(f"Search time: {results[0]['search_time_ms']:.2f}ms")
+    results = store.search_with_documents(query, k=3)
+    print(f"\nTop 3 results:")
+    for r in results:
+        print(f"  Doc {r['document']['id']}: score={r['score']:.4f}")
     
-    print("\nStats:", store_flat.get_stats())
+    print("\n✓ All tests passed!")

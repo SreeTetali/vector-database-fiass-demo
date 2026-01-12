@@ -1,0 +1,192 @@
+[
+  {
+    "title": "Python Azure Functions - Getting Started",
+    "category": "Azure Functions",
+    "text": "Azure Functions is a serverless compute service that lets you run event-triggered code without having to explicitly provision or manage infrastructure. You can use Python to write Azure Functions. Azure Functions supports Python versions 3.7, 3.8, 3.9, and 3.10. The Python worker for Azure Functions is based on the Azure Functions Python library.",
+    "url": "https://docs.microsoft.com/azure/functions/python",
+    "tags": [
+      "azure",
+      "serverless",
+      "python",
+      "functions"
+    ]
+  },
+  {
+    "title": "Python Virtual Environments Best Practices",
+    "category": "Python Basics",
+    "text": "A virtual environment is a self-contained directory tree that contains a Python installation for a particular version of Python, plus a number of additional packages. Using virtual environments is considered a best practice for Python development. You can create a virtual environment using venv module or virtualenv package. To create: python -m venv myenv. To activate on Windows: myenv\\Scripts\\activate",
+    "url": "https://docs.python.org/3/tutorial/venv.html",
+    "tags": [
+      "python",
+      "venv",
+      "best-practices",
+      "environment"
+    ]
+  },
+  {
+    "title": "Azure Blob Storage Python SDK",
+    "category": "Azure Storage",
+    "text": "Azure Blob Storage is Microsoft's object storage solution for the cloud. Use the Azure Storage Blobs client library for Python to manage blobs and containers. Install using: pip install azure-storage-blob. Common operations include uploading blobs, downloading blobs, listing blobs, and deleting blobs. The BlobServiceClient class provides methods to interact with Azure Storage accounts.",
+    "url": "https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-python",
+    "tags": [
+      "azure",
+      "storage",
+      "blob",
+      "python",
+      "sdk"
+    ]
+  },
+  {
+    "title": "Python List Comprehensions",
+    "category": "Python Basics",
+    "text": "List comprehensions provide a concise way to create lists in Python. They consist of brackets containing an expression followed by a for clause, then zero or more for or if clauses. For example: squares = [x**2 for x in range(10)]. List comprehensions are more compact and faster than equivalent for loops. They can also include conditional logic.",
+    "url": "https://docs.python.org/3/tutorial/datastructures.html",
+    "tags": [
+      "python",
+      "lists",
+      "comprehensions",
+      "syntax"
+    ]
+  },
+  {
+    "title": "Azure Cosmos DB Python SDK",
+    "category": "Azure Databases",
+    "text": "Azure Cosmos DB is a globally distributed, multi-model database service. The Python SDK allows you to create and query databases, containers, and items. Install via: pip install azure-cosmos. The CosmosClient class is the entry point. Cosmos DB supports multiple APIs including SQL, MongoDB, Cassandra, Gremlin, and Table. Offers automatic indexing and multi-region replication.",
+    "url": "https://docs.microsoft.com/azure/cosmos-db/sql-api-python-samples",
+    "tags": [
+      "azure",
+      "cosmos-db",
+      "database",
+      "python",
+      "nosql"
+    ]
+  },
+  {
+    "title": "Python Decorators Explained",
+    "category": "Python Advanced",
+    "text": "Decorators are a powerful feature in Python that allows you to modify the behavior of functions or classes. A decorator is a function that takes another function as an argument and extends its behavior without explicitly modifying it. Common use cases include logging, authentication, caching, and timing. Syntax uses @ symbol. Example: @property, @staticmethod, @classmethod are built-in decorators.",
+    "url": "https://docs.python.org/3/glossary.html#term-decorator",
+    "tags": [
+      "python",
+      "decorators",
+      "advanced",
+      "functions"
+    ]
+  },
+  {
+    "title": "Azure Key Vault with Python",
+    "category": "Azure Security",
+    "text": "Azure Key Vault helps safeguard cryptographic keys and secrets used by cloud applications and services. The Python SDK provides SecretClient for secrets, KeyClient for keys, and CertificateClient for certificates. Install using: pip install azure-keyvault-secrets. Authentication typically uses DefaultAzureCredential from azure-identity package. Supports secret versioning and access policies.",
+    "url": "https://docs.microsoft.com/azure/key-vault/secrets/quick-create-python",
+    "tags": [
+      "azure",
+      "security",
+      "key-vault",
+      "python",
+      "secrets"
+    ]
+  },
+  {
+    "title": "Python Type Hints and Annotations",
+    "category": "Python Advanced",
+    "text": "Type hints were introduced in Python 3.5 and allow you to indicate the expected data types of function parameters and return values. They improve code readability and enable better IDE support and static type checking with tools like mypy. Example: def greeting(name: str) -> str: return f'Hello {name}'. Type hints are optional and don't affect runtime behavior. Common types include int, str, List, Dict, Optional, Union.",
+    "url": "https://docs.python.org/3/library/typing.html",
+    "tags": [
+      "python",
+      "type-hints",
+      "typing",
+      "annotations"
+    ]
+  },
+  {
+    "title": "Azure Machine Learning Python SDK",
+    "category": "Azure AI/ML",
+    "text": "Azure Machine Learning service provides a cloud-based environment to train, deploy, and manage machine learning models. The Python SDK v2 uses a command-based interface. Install via: pip install azure-ai-ml. Key concepts include Workspace, Compute, Data Assets, Models, and Endpoints. Supports MLOps practices including experiment tracking, model versioning, and automated ML pipelines.",
+    "url": "https://docs.microsoft.com/azure/machine-learning/how-to-configure-environment",
+    "tags": [
+      "azure",
+      "machine-learning",
+      "ai",
+      "python",
+      "mlops"
+    ]
+  },
+  {
+    "title": "Python Context Managers",
+    "category": "Python Advanced",
+    "text": "Context managers allow you to allocate and release resources precisely when you want to. The most common use is the 'with' statement for file operations. Context managers implement __enter__ and __exit__ methods. Example: with open('file.txt', 'r') as f: data = f.read(). This ensures files are properly closed even if exceptions occur. You can create custom context managers using contextlib module.",
+    "url": "https://docs.python.org/3/reference/datamodel.html#context-managers",
+    "tags": [
+      "python",
+      "context-managers",
+      "with-statement",
+      "resources"
+    ]
+  },
+  {
+    "title": "Azure DevOps Python API",
+    "category": "Azure DevOps",
+    "text": "The Azure DevOps Python API allows you to interact with Azure DevOps services programmatically. Install using: pip install azure-devops. Supports operations on work items, build pipelines, release pipelines, Git repositories, and test plans. Authentication uses Personal Access Tokens (PAT). The Connection class from azure.devops.connection is the main entry point for API interactions.",
+    "url": "https://docs.microsoft.com/azure/devops/integrate/concepts/python-api",
+    "tags": [
+      "azure",
+      "devops",
+      "ci-cd",
+      "python",
+      "api"
+    ]
+  },
+  {
+    "title": "Python Generators and Iterators",
+    "category": "Python Advanced",
+    "text": "Generators are functions that return an iterator using the yield keyword instead of return. They generate values on-the-fly and are memory efficient for large datasets. Example: def count_up_to(n): i = 0; while i < n: yield i; i += 1. Iterators are objects that implement __iter__ and __next__ methods. Generators are a simple way to create iterators without writing a class.",
+    "url": "https://docs.python.org/3/tutorial/classes.html#generators",
+    "tags": [
+      "python",
+      "generators",
+      "iterators",
+      "yield",
+      "memory"
+    ]
+  },
+  {
+    "title": "Azure Service Bus Python SDK",
+    "category": "Azure Messaging",
+    "text": "Azure Service Bus is a fully managed enterprise message broker with message queues and publish-subscribe topics. The Python SDK provides ServiceBusClient for connection management and ServiceBusSender/ServiceBusReceiver for messaging operations. Install via: pip install azure-servicebus. Supports FIFO ordering, dead-letter queues, message sessions, and duplicate detection. Ideal for decoupling applications.",
+    "url": "https://docs.microsoft.com/azure/service-bus-messaging/service-bus-python-how-to-use-queues",
+    "tags": [
+      "azure",
+      "messaging",
+      "service-bus",
+      "python",
+      "queues"
+    ]
+  },
+  {
+    "title": "Python Async/Await Concurrency",
+    "category": "Python Advanced",
+    "text": "Asynchronous programming in Python uses async/await syntax introduced in Python 3.5. Async functions are defined with async def and called with await. The asyncio module provides infrastructure for writing concurrent code. Example: async def main(): await asyncio.sleep(1). Async is ideal for I/O-bound operations like network requests or file operations. Not suitable for CPU-bound tasks.",
+    "url": "https://docs.python.org/3/library/asyncio.html",
+    "tags": [
+      "python",
+      "async",
+      "asyncio",
+      "concurrency",
+      "await"
+    ]
+  },
+  {
+    "title": "Azure Cognitive Services Python SDK",
+    "category": "Azure AI/ML",
+    "text": "Azure Cognitive Services are cloud-based AI services with REST APIs and SDKs for adding intelligence to applications. Python SDKs available for Computer Vision, Text Analytics, Speech Services, Translator, and more. Install specific services like: pip install azure-cognitiveservices-vision-computervision. Each service requires an API key and endpoint. Supports features like image analysis, sentiment analysis, speech-to-text, and language translation.",
+    "url": "https://docs.microsoft.com/azure/cognitive-services/cognitive-services-apis-create-account",
+    "tags": [
+      "azure",
+      "cognitive-services",
+      "ai",
+      "python",
+      "vision",
+      "nlp"
+    ]
+  }
+]

@@ -2,12 +2,16 @@
 
 Complete guide for setting up the FAISS Vector Database Demo project.
 
+---
+
 ## System Requirements
 
 - **Operating System:** Windows 10/11, macOS 10.14+, or Linux
 - **Python:** 3.9, 3.10, or 3.11
 - **Memory:** Minimum 4GB RAM (8GB+ recommended)
 - **Disk Space:** ~500MB for dependencies and models
+
+---
 
 ## Step-by-Step Setup
 
@@ -22,22 +26,28 @@ Complete guide for setting up the FAISS Vector Database Demo project.
 ```bash
 # Using Homebrew
 brew install python@3.11
+```
 
-Linux (Ubuntu/Debian)
-
-bash
+#### Linux (Ubuntu/Debian)
+```bash
 sudo apt update
 sudo apt install python3.11 python3.11-venv python3-pip
+```
 
-2. Clone Repository
+---
 
-bash
-git clone https://github.com/SreeTetali/vector-database-fiass-demo.git
-cd vector-database-fiass-demo
+### 2. Clone Repository
 
-3. Create Virtual Environment
+```bash
+git clone https://github.com/SreeTetali/vector-database-faiss-demo.git
+cd vector-database-faiss-demo
+```
 
-bash
+---
+
+### 3. Create Virtual Environment
+
+```bash
 # Create venv
 python -m venv venv
 
@@ -49,27 +59,34 @@ venv\Scripts\Activate.ps1
 
 # Activate (macOS/Linux)
 source venv/bin/activate
+```
 
-Note: You should see (venv) in your terminal prompt when activated.
-4. Install Dependencies
+**Note:** You should see `(venv)` in your terminal prompt when activated.
 
-bash
+---
+
+### 4. Install Dependencies
+
+```bash
 # Upgrade pip
 python -m pip install --upgrade pip
 
 # Install all requirements
 pip install -r requirements.txt
+```
 
-# This will install:
-# - faiss-cpu (vector search)
-# - sentence-transformers (embeddings)
-# - numpy, pandas (data processing)
-# - jupyter (notebooks)
-# - matplotlib, seaborn (visualization)
+This will install:
+- `faiss-cpu` (vector search)
+- `sentence-transformers` (embeddings)
+- `numpy`, `pandas` (data processing)
+- `jupyter` (notebooks)
+- `matplotlib`, `seaborn` (visualization)
 
-5. Verify Installation
+---
 
-bash
+### 5. Verify Installation
+
+```bash
 # Test FAISS
 python -c "import faiss; print(f'FAISS: {faiss.__version__}')"
 
@@ -78,168 +95,308 @@ python -c "from sentence_transformers import SentenceTransformer; print('Sentenc
 
 # Test all imports
 python -c "from src.data_loader import DocumentationLoader; print('All imports: OK')"
+```
 
-Expected output:
-
-text
+**Expected output:**
+```text
 FAISS: 1.9.0
 Sentence-Transformers: OK
 All imports: OK
+```
 
-6. Download Embedding Model (First Run)
+---
+
+### 6. Run Complete Setup Test
+
+```bash
+# Run comprehensive test suite
+python test_setup.py
+```
+
+This validates:
+- All package imports
+- Data loading functionality
+- Embedding generation
+- FAISS vector store operations
+- Complete search engine pipeline
+
+You should see: **🎉 ALL TESTS PASSED! 🎉**
+
+---
+
+### 7. Download Embedding Model (Automatic on First Run)
 
 The embedding model (~80MB) will download automatically on first use:
 
-bash
+```bash
 python src/embedding_engine.py
+```
 
-This downloads all-MiniLM-L6-v2 from HuggingFace and caches it locally.
-7. Create Sample Data
+This downloads `all-MiniLM-L6-v2` from HuggingFace and caches it locally in `~/.cache/huggingface/`.
 
-bash
+---
+
+### 8. Create Sample Data
+
+```bash
 python src/data_loader.py
+```
 
-This creates data/processed/sample_docs.json with 15 Python/Azure documentation samples.
-8. Run Quick Test
+This creates `data/processed/sample_docs.json` with 15 Python/Azure documentation samples.
 
-bash
-# Test complete search engine
-python src/search_engine.py
+---
 
-Expected output showing search results for "How do I use Azure serverless functions?"
-9. Launch Jupyter Notebooks
+### 9. Launch Jupyter Notebooks
 
-bash
+```bash
 jupyter notebook
+```
 
-Browser should open automatically. Navigate to notebooks/ and run:
+Browser should open automatically at `http://localhost:8888`. Navigate to `notebooks/` and run in sequence:
 
-    01_data_preparation.ipynb
+1. `01_data_preparation.ipynb` - Load and explore documentation
+2. `02_faiss_indexing.ipynb` - Build and compare FAISS indices
+3. `03_performance_benchmarks.ipynb` - Performance analysis and metrics
 
-    02_faiss_indexing.ipynb
+---
 
-    03_performance_benchmarks.ipynb
+## Troubleshooting
 
-Troubleshooting
-Issue: faiss-cpu installation fails
+### Issue: `faiss-cpu` installation fails
 
-Solution 1: Update pip
-
-bash
+**Solution 1:** Update pip and retry
+```bash
 python -m pip install --upgrade pip setuptools wheel
 pip install faiss-cpu
+```
 
-Solution 2: Try conda
-
-bash
+**Solution 2:** Try conda (if you have Anaconda/Miniconda)
+```bash
 conda install -c pytorch faiss-cpu
+```
 
-Issue: Jupyter kernel not found
+**Solution 3:** Check Python version
+```bash
+python --version  # Should be 3.9, 3.10, or 3.11
+```
 
-Solution:
+---
 
-bash
-python -m ipykernel install --user --name=venv
+### Issue: Jupyter kernel not found
 
-Issue: Import errors in notebooks
+**Solution:** Install IPython kernel for your venv
+```bash
+python -m ipykernel install --user --name=venv --display-name="Python (venv)"
+```
 
-Solution: Add parent directory to path (already in notebooks):
+Then in Jupyter: `Kernel` → `Change Kernel` → Select `Python (venv)`
 
-python
+---
+
+### Issue: Import errors in notebooks
+
+**Solution:** Notebooks include path fix, but verify:
+```python
 import sys
-sys.path.append('..')
+sys.path.append('..')  # Add parent directory to path
+```
 
-Issue: Sentence-Transformers download slow/fails
+---
 
-Solution: Download model manually:
+### Issue: Sentence-Transformers download slow/fails
 
-python
+**Solution 1:** Manual download with progress
+```python
 from sentence_transformers import SentenceTransformer
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+print("Model loaded successfully!")
+```
 
-Issue: Permission denied on Windows
+**Solution 2:** Pre-download using HuggingFace CLI
+```bash
+pip install huggingface-hub
+huggingface-cli download sentence-transformers/all-MiniLM-L6-v2
+```
 
-Solution: Run as Administrator or change execution policy:
+---
 
-powershell
+### Issue: Permission denied on Windows
+
+**Solution:** Change PowerShell execution policy
+```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
-GPU Support (Optional)
+Or run PowerShell/Command Prompt as Administrator.
 
-For faster embedding generation and indexing on large datasets:
-Install FAISS-GPU
+---
 
-bash
+### Issue: `ModuleNotFoundError` after installation
+
+**Solution:** Ensure virtual environment is activated
+```bash
+# Check if (venv) appears in prompt
+# If not, activate:
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # macOS/Linux
+```
+
+---
+
+## GPU Support (Optional)
+
+For faster embedding generation and indexing on large datasets (requires NVIDIA GPU with CUDA):
+
+### Install FAISS-GPU
+
+```bash
 # Requires CUDA 11.x or 12.x
 pip uninstall faiss-cpu
 pip install faiss-gpu
+```
 
-Install PyTorch with CUDA
+### Install PyTorch with CUDA
 
-bash
+```bash
+# For CUDA 11.8
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
-Development Setup (Optional)
+# For CUDA 12.1
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+**Note:** GPU acceleration provides significant speedup for large corpora (10k+ documents).
+
+---
+
+## Development Setup (Optional)
 
 For contributing or extending the project:
 
-bash
+```bash
 # Install development dependencies
-pip install pytest pytest-cov black flake8 mypy
+pip install pytest pytest-cov black flake8 mypy isort
 
-# Install in editable mode
+# Install project in editable mode
 pip install -e .
 
 # Run tests
-pytest tests/
+pytest tests/ -v
 
 # Format code
 black src/
 
+# Sort imports
+isort src/
+
 # Type checking
 mypy src/
 
-VS Code Setup (Recommended)
-Extensions
+# Linting
+flake8 src/
+```
 
-    Python (Microsoft)
+---
 
-    Jupyter (Microsoft)
+## VS Code Setup (Recommended)
 
-    Pylance (Microsoft)
+### Required Extensions
 
-Settings (.vscode/settings.json)
+Install these VS Code extensions:
+- **Python** (Microsoft)
+- **Jupyter** (Microsoft)
+- **Pylance** (Microsoft)
 
-json
+### Workspace Settings
+
+Create `.vscode/settings.json`:
+
+```json
 {
     "python.defaultInterpreterPath": "./venv/Scripts/python.exe",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
     "python.formatting.provider": "black",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "jupyter.notebookFileRoot": "${workspaceFolder}"
 }
+```
 
-Next Steps
+For macOS/Linux, change interpreter path to:
+```json
+"python.defaultInterpreterPath": "./venv/bin/python"
+```
 
-    ✅ Complete setup
+---
 
-    ✅ Run notebooks in sequence
+## Quick Start Commands (Copy/Paste)
 
-    ✅ Experiment with different queries
+### Windows
+```bash
+python -m venv venv
+venv\Scripts\activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python test_setup.py
+jupyter notebook
+```
 
-    ✅ Try different index types
+### macOS/Linux
+```bash
+python3 -m venv venv
+source venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python test_setup.py
+jupyter notebook
+```
 
-    ✅ Review performance benchmarks
+---
 
-    ➡️ Extend with your own data!
+## Next Steps
 
-Getting Help
+After successful setup:
 
-    Issues: Open GitHub issue
+1. ✅ **Run test suite** → `python test_setup.py`
+2. ✅ **Explore notebooks** → Start with `01_data_preparation.ipynb`
+3. ✅ **Experiment with queries** → Try different search terms
+4. ✅ **Compare index types** → Test FlatIP, IVFFlat, HNSW
+5. ✅ **Review benchmarks** → Analyze performance tradeoffs
+6. ✅ **Extend with your data** → Replace sample docs with your corpus
 
-    Questions: Check FAISS documentation
+---
 
-    Community: FAISS Google Group
+## Getting Help
 
-Setup complete! Happy coding! 🚀
+- **Issues:** [Open GitHub Issue](https://github.com/SreeTetali/vector-database-faiss-demo/issues)
+- **FAISS Documentation:** [FAISS Wiki](https://github.com/facebookresearch/faiss/wiki)
+- **Sentence-Transformers:** [Official Docs](https://www.sbert.net/)
+
+---
+
+## Common Setup Verification
+
+Run these commands to verify everything works:
+
+```bash
+# 1. Check Python version
+python --version
+
+# 2. Verify virtual environment
+which python  # macOS/Linux
+where python  # Windows
+
+# 3. Test imports
+python -c "import faiss, sentence_transformers, numpy, pandas; print('✓ All imports OK')"
+
+# 4. Run full test suite
+python test_setup.py
+
+# 5. Launch Jupyter
+jupyter notebook
+```
+
+---
+
+**Setup complete! Happy coding! 🚀**

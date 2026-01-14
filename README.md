@@ -91,8 +91,6 @@ vector-database-faiss-demo/
 │   ├── embedding_engine.py            # Sentence-Transformers wrapper
 │   ├── vector_store.py                # FAISS index abstraction
 │   └── search_engine.py               # High-level semantic search API
-├── optional_chromadb/
-│   └── chromadb_comparison.ipynb      # (Optional) ChromaDB comparison
 ├── tests/
 │   └── test_vector_store.py           # Unit tests for vector store
 └── test_setup.py                      # Sanity check script for full stack

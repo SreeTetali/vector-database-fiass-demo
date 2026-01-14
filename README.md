@@ -54,7 +54,7 @@ On larger corpora, the relative behavior is:
 - `IndexIVFFlat`: significantly faster with tunable recall
 - `IndexHNSWFlat`: near-logarithmic search with high recall
 
-These patterns match common FAISS usage recommendations from production guides.  
+These patterns match common FAISS usage recommendations from production guides.
 
 ---
 
@@ -96,6 +96,9 @@ vector-database-faiss-demo/
 ├── tests/
 │   └── test_vector_store.py           # Unit tests for vector store
 └── test_setup.py                      # Sanity check script for full stack
+```
+
+---
 
 ## 🚀 Quick Start
 
@@ -104,8 +107,9 @@ vector-database-faiss-demo/
 ```bash
 git clone https://github.com/SreeTetali/vector-database-faiss-demo.git
 cd vector-database-faiss-demo
+```
 
-2. Create and Activate Virtual Environment
+### 2. Create and Activate Virtual Environment
 
 ```bash
 # Create venv
@@ -115,25 +119,32 @@ python -m venv venv
 venv\Scripts\activate
 
 # Activate (macOS / Linux)
-# source venv/bin/activate
+source venv/bin/activate
+```
 
-3. Install Dependencies
+### 3. Install Dependencies
 
-bash
+```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+```
 
-4. Verify Installation
+### 4. Verify Installation
 
-bash
+```bash
 # Quick dependency sanity check
 python test_setup.py
+```
 
 You should see all tests passing: imports, data loading, embeddings, FAISS store, and full search engine.
-💡 Usage Examples
-Example 1 – Basic Semantic Search
 
-python
+---
+
+## 💡 Usage Examples
+
+### Example 1 – Basic Semantic Search
+
+```python
 from src.search_engine import SemanticSearchEngine
 from src.data_loader import DocumentationLoader
 
@@ -153,10 +164,11 @@ results = engine.search(query, k=3)
 
 # Pretty print results
 engine.print_results(results)
+```
 
-Example 2 – Working Directly with FAISSVectorStore
+### Example 2 – Working Directly with FAISSVectorStore
 
-python
+```python
 from src.data_loader import DocumentationLoader
 from src.embedding_engine import EmbeddingEngine
 from src.vector_store import FAISSVectorStore
@@ -169,188 +181,174 @@ embedder = EmbeddingEngine()
 embeddings = embedder.embed_documents(docs)
 
 # Create and populate an IVFFlat index
-```python
-# Create and populate an IVFFlat index
 store = FAISSVectorStore(embedding_dim=embeddings.shape[1], index_type="IVFFlat")
-store.create_index(n_vectors=len(docs), nlist=10)  # Example parameters
-store.train(embeddings)
+# Index is created automatically - training happens in add_documents()
 store.add_documents(embeddings, docs)
 
 # Search
-query_emb = embedder.embed("Azure machine learning services", show_progress=False)
+query_emb = embedder.embed(["Azure machine learning services"], show_progress=False)
 results = store.search_with_documents(query_emb, k=3, nprobe=3)
 
 for r in results:
     print(r["score"], "-", r["document"]["title"])
+```
 
-Example 3 – Saving and Loading Indices
+### Example 3 – Saving and Loading Indices
 
-python
+```python
 # After building and populating the index
-store.save("python_azure_docs")
+store.save("data/indices/python_azure_docs")
 
 # Later or in another process
 new_store = FAISSVectorStore(embedding_dim=384, index_type="IVFFlat")
-new_store.load("python_azure_docs")
+new_store.load("data/indices/python_azure_docs")
 
 # Now new_store is ready for search
+```
 
-🔍 Index Types Explained
-1. IndexFlatIP – Exact Inner Product (Cosine)
+---
 
-    Uses inner product on L2-normalized embeddings (equivalent to cosine similarity).
+## 🔍 Index Types Explained
 
-    No training phase.
+### 1. IndexFlatIP – Exact Inner Product (Cosine)
 
-    Complexity: O(N)O(N) per query (linear scan).
+- Uses inner product on L2-normalized embeddings (equivalent to cosine similarity)
+- No training phase
+- Complexity: O(N) per query (linear scan)
+- **Best for:**
+  - Small datasets (e.g., < 10k vectors)
+  - Situations where recall must be 100%
 
-    Best for:
+### 2. IndexIVFFlat – Inverted File (Clustered)
 
-        Small datasets (e.g., < 10k vectors)
+- Clusters vectors into `nlist` centroids and only searches `nprobe` closest clusters
+- Needs training on representative data
+- Complexity: O(N/nlist × nprobe)
+- **Tunable tradeoff:**
+  - Higher `nprobe` → Better recall, higher latency
+  - Lower `nprobe` → Lower recall, lower latency
+- **Best for:**
+  - Medium to large datasets (10k–1M+ vectors)
+  - Balanced speed/accuracy requirements
 
-        Situations where recall must be 100%
+### 3. IndexHNSWFlat – Graph-Based ANN
 
-2. IndexIVFFlat – Inverted File (Clustered)
+- Builds a Hierarchical Navigable Small World graph of vectors
+- No training step; index construction is part of `add`
+- **Parameters:**
+  - `M` – number of neighbors in the graph
+  - `efSearch` – controls search breadth (accuracy vs speed)
+- Excellent latency/recall tradeoff, suited for production
+- **Best for:**
+  - Production systems requiring sub-millisecond latency
+  - Large datasets with high accuracy requirements
 
-    Clusters vectors into nlist centroids and only searches nprobe closest clusters.
+---
 
-    Needs training on representative data.
+## 📈 Benchmarking Approach
 
-    Complexity: O(N/nlist×nprobe)O(N/nlist×nprobe).
+The notebook `03_performance_benchmarks.ipynb` runs:
 
-    Tunable tradeoff:
+1. **Build Time Benchmark**
+   - Measure wall-clock time to construct each index type
 
-        Higher nprobe → Better recall, higher latency
+2. **Search Latency Benchmark**
+   - Generate multiple natural-language queries
+   - Measure and summarize latency: mean, median, P95
 
-        Lower nprobe → Lower recall, lower latency
-
-    Best for:
-
-        Medium to large datasets (10k–1M+ vectors)
-
-        Balanced speed/accuracy requirements
-
-3. IndexHNSWFlat – Graph-Based ANN
-
-    Builds a Hierarchical Navigable Small World graph of vectors.
-
-    No training step; index construction is part of add.
-
-    Parameters:
-
-        M – number of neighbors in the graph
-
-        efSearch – controls search breadth (accuracy vs speed)
-
-    Excellent latency/recall tradeoff, suited for production.
-
-📈 Benchmarking Approach
-
-The notebook 03_performance_benchmarks.ipynb runs:
-
-    Build Time Benchmark
-
-        Measure wall-clock time to construct each index type.
-
-    Search Latency Benchmark
-
-        Generate multiple natural-language queries.
-
-        Measure and summarize latency: mean, median, P95.
-
-    Approximate Memory Benchmark
-
-        Inspect Python object sizes for the index and stored docs.
-
-        Provide rough MB estimates per index type.
+3. **Approximate Memory Benchmark**
+   - Inspect Python object sizes for the index and stored docs
+   - Provide rough MB estimates per index type
 
 The results are visualized with box plots and bar charts for quick comparison.
-🧪 Testing
+
+---
+
+## 🧪 Testing
 
 A convenience script is included:
 
-bash
+```bash
 python test_setup.py
+```
 
 It runs five checks:
 
-    Imports (FAISS, Sentence-Transformers, NumPy, project modules)
+1. Imports (FAISS, Sentence-Transformers, NumPy, project modules)
+2. Data loading
+3. Embedding generation
+4. Vector store behavior
+5. Full semantic search engine
 
-    Data loading
+You can also add unit tests under `tests/` and run:
 
-    Embedding generation
-
-    Vector store behavior
-
-    Full semantic search engine
-
-You can also add unit tests under tests/ and run:
-
-bash
+```bash
 pytest
+```
 
-🧱 Scalability & Production Notes
+---
+
+## 🧱 Scalability & Production Notes
 
 For real-world deployment:
 
-    Larger Corpora (100k+ documents)
+- **Larger Corpora (100k+ documents)**
+  - Prefer IndexIVFFlat or IndexHNSWFlat
+  - Consider GPU acceleration (`faiss-gpu`)
 
-        Prefer IndexIVFFlat or IndexHNSWFlat
+- **Memory Optimization**
+  - Use FAISS Product Quantization (IndexIVFPQ) for compression
 
-        Consider GPU acceleration (faiss-gpu)
+- **Hybrid Search**
+  - Combine vector similarity with keyword or metadata filters
 
-    Memory Optimization
+- **MLOps**
+  - Version embeddings and indices
+  - Monitor latency and recall over time
+  - Periodically retrain IVF centroids if data distribution changes
 
-        Use FAISS Product Quantization (IndexIVFPQ) for compression
+---
 
-    Hybrid Search
-
-        Combine vector similarity with keyword or metadata filters
-
-    MLOps
-
-        Version embeddings and indices
-
-        Monitor latency and recall over time
-
-        Periodically retrain IVF centroids if data distribution changes
-
-🧭 Roadmap
+## 🧭 Roadmap
 
 Planned or natural extensions:
 
-    Expand demo corpus to 10k+ documents
+- [ ] Expand demo corpus to 10k+ documents
+- [ ] Add ChromaDB demo for side-by-side vector DB comparison
+- [ ] Add REST API (FastAPI) for querying the vector index
+- [ ] Add Dockerfile and deployment instructions
+- [ ] Integrate with an LLM to form a minimal RAG system
+- [ ] Add evaluation scripts for recall@k vs index configuration
 
-    Add ChromaDB demo for side-by-side vector DB comparison
+---
 
-    Add REST API (FastAPI) for querying the vector index
-
-    Add Dockerfile and deployment instructions
-
-    Integrate with an LLM to form a minimal RAG system
-
-    Add evaluation scripts for recall@k vs index configuration
-
-🤝 Contributing
+## 🤝 Contributing
 
 Although this is primarily a portfolio project, improvements are welcome:
 
-    Fork the repository
+1. Fork the repository
+2. Create a feature branch:
+   ```bash
+   git checkout -b feature/my-improvement
+   ```
+3. Commit your changes:
+   ```bash
+   git commit -am "Add my improvement"
+   ```
+4. Push the branch:
+   ```bash
+   git push origin feature/my-improvement
+   ```
+5. Open a Pull Request
 
-    Create a feature branch:
-    git checkout -b feature/my-improvement
+---
 
-    Commit your changes:
-    git commit -am "Add my improvement"
-
-    Push the branch:
-    git push origin feature/my-improvement
-
-    Open a Pull Request
-
-📝 License
+## 📝 License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
+
+---
+
 ## 👤 Author
 
 **Sree Tetali**
@@ -362,4 +360,3 @@ This project is licensed under the MIT License. See the LICENSE file for details
 ---
 
 **Built to demonstrate practical vector database and FAISS expertise for managing AI/LLM-powered systems.**
-

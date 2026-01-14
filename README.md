@@ -354,7 +354,7 @@ This project is licensed under the MIT License. See the LICENSE file for details
 **Sree Tetali**
 
 - GitHub: [@SreeTetali](https://github.com/SreeTetali)
-- LinkedIn: [linkedin.com/in/sree-tetali](https://www.linkedin.com/in/sree-tetali)
+- LinkedIn: [linkedin.com/in/SreeChella-Tetali](https://www.linkedin.com/in/sreechella-tetali/)
 - Email: sree.tetali@gmail.com
 
 ---
